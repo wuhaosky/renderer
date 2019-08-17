@@ -316,6 +316,7 @@ function patchChildren(
       break
     // 旧的 children 中有多个子节点时，会执行该 case 语句块
     default:
+      // snabbdom 双端比较算法
       switch (nextChildFlags) {
         case ChildrenFlags.SINGLE_VNODE:
           for (let i = 0; i < prevChildren.length; i++) {
@@ -394,6 +395,67 @@ function patchChildren(
           break
       }
       break
+
+      /* react 双层for循环算法
+      switch (nextChildFlags) {
+        case ChildrenFlags.SINGLE_VNODE:
+          for (let i = 0; i < prevChildren.length; i++) {
+            container.removeChild(prevChildren[i].el)
+          }
+          mount(nextChildren, container)
+          break
+        case ChildrenFlags.NO_CHILDREN:
+          for (let i = 0; i < prevChildren.length; i++) {
+            container.removeChild(prevChildren[i].el)
+          }
+          break
+        default:
+          // 但新的 children 中有多个子节点时，会执行该 case 语句块
+          let lastIndex = 0
+          for (let i = 0; i < nextChildren.length; i++) {
+            const nextVNode = nextChildren[i]
+            let j = 0,
+              find = false
+            for (j; j < prevChildren.length; j++) {
+              const prevVNode = prevChildren[j]
+              if (nextVNode.key === prevVNode.key) {
+                find = true
+                patch(prevVNode, nextVNode, container)
+                if (j < lastIndex) {
+                  // 需要移动
+                  const refNode = nextChildren[i - 1].el.nextSibling
+                  container.insertBefore(prevVNode.el, refNode)
+                  break
+                } else {
+                  // 更新 lastIndex
+                  lastIndex = j
+                }
+              }
+            }
+            if (!find) {
+              // 挂载新节点
+              const refNode =
+                i - 1 < 0
+                  ? prevChildren[0].el
+                  : nextChildren[i - 1].el.nextSibling
+              mount(nextVNode, container, false, refNode)
+            }
+          }
+          // 移除已经不存在的节点
+          for (let i = 0; i < prevChildren.length; i++) {
+            const prevVNode = prevChildren[i]
+            const has = nextChildren.find(
+              nextVNode => nextVNode.key === prevVNode.key
+            )
+            if (!has) {
+              // 移除
+              container.removeChild(prevVNode.el)
+            }
+          }
+          break
+      }
+      break
+      */
   }
 }
 
